@@ -1,0 +1,17 @@
+{
+  "name": "zalo-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "ngrok": "^5.0.0-beta.2",
+    "request": "^2.88.2"
+  }
+}
