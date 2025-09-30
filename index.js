@@ -1,57 +1,95 @@
-import express from "express";
-import axios from "axios";
-import bodyParser from "body-parser";
-import cors from "cors";
+// server.js
+const express = require("express");
+const request = require("request");
+const cors = require("cors");
+const dotenv = require("dotenv");
 
+dotenv.config();
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
-const APP_SECRET = process.env.ZALO_APP_SECRET || "<your_zalo_app_secret_key>";
+app.use(express.json());
 
-app.post("/get-zalo-user", async (req, res) => {
-  const { accessToken, phoneToken } = req.body;
+const APP_ID = process.env.ZALO_APP_ID;
+const APP_SECRET = process.env.ZALO_APP_SECRET;
+const REDIRECT_URI = process.env.ZALO_REDIRECT_URI;
 
-  if (!accessToken || !phoneToken) {
-    return res.status(400).json({ error: "Missing accessToken or phoneToken" });
-  }
+const ZALO_OAUTH_TOKEN_URL = "https://oauth.zaloapp.com/v4/access_token";
+const API_DOMAIN = "https://graph.zalo.me";
+
+app.post("/zalo/token", (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ error: "Thiếu code" });
+
+  request.post(
+    {
+      url: ZALO_OAUTH_TOKEN_URL,
+      qs: {
+        app_id: APP_ID,
+        app_secret: APP_SECRET,
+        code,
+        redirect_uri: REDIRECT_URI,
+      },
+      json: true,
+    },
+    (err, response, body) => {
+      if (err) return res.status(500).json({ error: true, message: err.message });
+      return res.json(body);
+    }
+  );
+});
+
+app.post("/zalo/userinfo", async (req, res) => {
+  const { access_token } = req.body;
+  if (!access_token) return res.status(400).json({ error: "Thiếu access_token" });
+
+  const getZaloProfile = () =>
+    new Promise((resolve, reject) => {
+      request(
+        {
+          url: `${API_DOMAIN}/v2.0/me`,
+          method: "GET",
+          qs: {
+            access_token,
+            fields: "id,name,picture",
+          },
+          json: true,
+        },
+        (err, response, body) => {
+          if (err) return reject(err);
+          resolve(body);
+        }
+      );
+    });
+
+  const getZaloPhone = () =>
+    new Promise((resolve, reject) => {
+      request(
+        {
+          url: `${API_DOMAIN}/v2.0/me/phone`,
+          method: "GET",
+          qs: { access_token },
+          json: true,
+        },
+        (err, response, body) => {
+          if (err) return reject(err);
+          resolve(body);
+        }
+      );
+    });
 
   try {
-    const profileRes = await axios.get("https://graph.zalo.me/v2.0/me", {
-      params: {
-        access_token: accessToken,
-        fields: "id,name,picture"
-      }
-    });
+    const user = await getZaloProfile();
+    let phone = null;
+    try {
+      phone = await getZaloPhone();
+    } catch (err) {
+      phone = { error: err.message };
+    }
 
-    const zaloProfile = profileRes.data; 
-
-    const phoneRes = await axios.get("https://graph.zalo.me/v2.0/me/info", {
-      headers: {
-        access_token: accessToken,
-        code: phoneToken,
-        secret_key: APP_SECRET,
-      },
-    });
-
-    const phone = phoneRes.data.data?.number || null;
-    res.json({
-      data: {
-        id: zaloProfile.id,
-        name: zaloProfile.name,
-        avatar: zaloProfile.picture?.data?.url || null,
-        phone,
-      },
-    });
+    return res.json({ error: 0, user, phone });
   } catch (err) {
-    console.error(err.response?.data || err.message);
-    res.status(500).json({
-      error: "Failed to fetch zalo user info",
-      details: err.response?.data || err.message,
-    });
+    return res.status(500).json({ error: true, message: err.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(3000, () => console.log("Server chạy tại http://localhost:3000"));
