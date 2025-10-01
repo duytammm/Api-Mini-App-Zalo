@@ -1,5 +1,5 @@
 import express from "express";
-import ZaloApi from "./zalo/zaloApi";
+import ZaloApi from "./zalo/zaloApi.js";
 
 const app = express();
 app.use(express.json);
