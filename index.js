@@ -1,28 +1,57 @@
+// index.js
 import express from "express";
+import cors from "cors";
 import ZaloApi from "./zalo/zaloApi.js";
 
 const app = express();
-app.use(express.json);
-
 const zaloApi = new ZaloApi();
+
+
+app.use(cors()); 
+app.use(express.json());
 
 app.post("/zalo/token", async (req, res) => {
   try {
-    const { code } = req.body;
-    const data = await zaloApi.getAccessTokenByCode(code);
-    return res.json(data);
+    const { code, code_verifier } = req.body;
+    if (!code || !code_verifier) {
+      return res.status(400).json({ error: "Thiếu code hoặc code_verifier" });
+    }
+
+
+    const tokenData = await zaloApi.getAccessTokenByCode(code, undefined, undefined, code_verifier);
+
+
+    const userInfo = await zaloApi.getUserInfo(tokenData.access_token);
+
+    return res.json({
+      access_token: tokenData.access_token,
+      expires_in: tokenData.expires_in,
+      refresh_token: tokenData.refresh_token,
+      user: userInfo
+    });
   } catch (err) {
+    console.error(" /zalo/token error:", err.response?.data || err.message);
     return res.status(500).json({ error: err.message });
   }
 });
+
+
 app.post("/zalo/userinfo", async (req, res) => {
   try {
-    const { phoneToken, accessToken } = req.body;
-    const phone = await zaloApi.getPhoneNumber(phoneToken, accessToken);
+    const { access_token } = req.body;
+    if (!access_token) return res.status(400).json({ error: "Thiếu access_token" });
 
-    return res.json({ phone });
+    const userInfo = await zaloApi.getUserInfo(access_token);
+
+    return res.json({ user: userInfo });
   } catch (err) {
+    console.error("/zalo/userinfo error:", err.response?.data || err.message);
     return res.status(500).json({ error: err.message });
   }
 });
-app.listen(3000, () => console.log("Zalo Api running on port 3000"));
+
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Zalo API running on port ${PORT}`);
+});

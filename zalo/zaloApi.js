@@ -16,32 +16,27 @@ class ZaloApi {
     this.accessToken = token;
   }
 
-  async getAccessTokenByCode(code, zaloId, secret) {
-    try {
-      const headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        secret_key: secret || this.secret,
-      };
+ async getAccessTokenByCode(code, zaloId, secret, codeVerifier) {
+  try {
+    const headers = {
+      "Content-Type": "application/x-www-form-urlencoded",
+      secret_key: secret || this.secret,
+    };
 
-      const body = new URLSearchParams({
-        code: code,
-        code_verifier: this.codeVerifier, 
-        grant_type: "authorization_code",
-        app_id: zaloId || this.appId,
-      });
+    const body = new URLSearchParams({
+      code: code,
+      code_verifier: codeVerifier || this.codeVerifier, // nhận từ FE
+      grant_type: "authorization_code",
+      app_id: zaloId || this.appId,
+    });
 
-      const rsp = await axios.post(this.ZALO_ACCESS_TOKEN_URL, body, {
-        headers,
-      });
-      return rsp.data;
-    } catch (error) {
-      console.error(
-        "getAccessTokenByCode error:",
-        error.response?.data || error.message
-      );
-      throw error;
-    }
+    const rsp = await axios.post(this.ZALO_ACCESS_TOKEN_URL, body, { headers });
+    return rsp.data;
+  } catch (error) {
+    console.error("getAccessTokenByCode error:", error.response?.data || error.message);
+    throw error;
   }
+}
   async getAccessTokenByRefresh(refreshToken) {
     try {
       const headers = {
