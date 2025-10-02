@@ -1,11 +1,18 @@
 // index.js
 import express from "express";
 import cors from "cors";
+import 'dotenv/config';
 import ZaloApi from "./zalo/zaloApi.js";
+import WooService from "./zalo/order.js";
 
 const app = express();
 const zaloApi = new ZaloApi();
 
+const wooService = new WooService({
+  baseUrl: process.env.WC_BASE_URL,
+  consumerKey: process.env.WC_KEY,
+  consumerSecret: process.env.WC_SECRET,
+});
 
 app.use(cors()); 
 app.use(express.json());
@@ -49,7 +56,15 @@ app.post("/zalo/userinfo", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-
+app.post("/zalo/create-order", async (req, res) => {
+  try {
+    const orderData = req.body;
+    const data = await wooService.createOrder(orderData);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
