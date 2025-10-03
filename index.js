@@ -1,4 +1,3 @@
-// index.js
 import express from "express";
 import cors from "cors";
 import 'dotenv/config';
@@ -20,13 +19,15 @@ const wooService = new WooService({
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use(cors()); 
+app.use(cors({
+  origin: "*",
+  methods: ["GET","POST","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"]
+}));
+
 app.use(express.json());
-
-
 
 app.post("/zalo/token", async (req, res) => {
   try {
@@ -45,7 +46,7 @@ app.post("/zalo/token", async (req, res) => {
       user: userInfo
     });
   } catch (err) {
-    console.error(" /zalo/token error:", err.response?.data || err.message);
+    console.error("/zalo/token error:", err.response?.data || err.message);
     return res.status(500).json({ error: err.message });
   }
 });
@@ -56,7 +57,6 @@ app.post("/zalo/userinfo", async (req, res) => {
     if (!access_token) return res.status(400).json({ error: "Thiếu access_token" });
 
     const userInfo = await zaloApi.getUserInfo(access_token);
-
     return res.json({ user: userInfo });
   } catch (err) {
     console.error("/zalo/userinfo error:", err.response?.data || err.message);
@@ -67,13 +67,16 @@ app.post("/zalo/userinfo", async (req, res) => {
 app.post("/zalo/create-order", async (req, res) => {
   try {
     const orderData = req.body;
+
+    console.log("Received orderData:", orderData);
     const data = await wooService.createOrder(orderData);
+    console.log("Woo response:", data); 
     res.json(data);
   } catch (err) {
+    console.error("/zalo/create-order error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
