@@ -2,6 +2,9 @@
 import express from "express";
 import cors from "cors";
 import 'dotenv/config';
+import path from "path";
+import { fileURLToPath } from "url";
+
 import ZaloApi from "./zalo/zaloApi.js";
 import WooService from "./zalo/order.js";
 
@@ -14,8 +17,16 @@ const wooService = new WooService({
   consumerSecret: process.env.WC_SECRET,
 });
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
+app.use(express.static(path.join(__dirname, "public")));
+
 app.use(cors()); 
 app.use(express.json());
+
+
 
 app.post("/zalo/token", async (req, res) => {
   try {
@@ -24,10 +35,7 @@ app.post("/zalo/token", async (req, res) => {
       return res.status(400).json({ error: "Thiếu code hoặc code_verifier" });
     }
 
-
     const tokenData = await zaloApi.getAccessTokenByCode(code, undefined, undefined, code_verifier);
-
-
     const userInfo = await zaloApi.getUserInfo(tokenData.access_token);
 
     return res.json({
@@ -42,7 +50,6 @@ app.post("/zalo/token", async (req, res) => {
   }
 });
 
-
 app.post("/zalo/userinfo", async (req, res) => {
   try {
     const { access_token } = req.body;
@@ -56,6 +63,7 @@ app.post("/zalo/userinfo", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
 app.post("/zalo/create-order", async (req, res) => {
   try {
     const orderData = req.body;
@@ -65,6 +73,7 @@ app.post("/zalo/create-order", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
