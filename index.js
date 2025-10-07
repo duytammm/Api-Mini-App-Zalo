@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import ZaloApi from "./zalo/zaloApi.js";
 import WooService from "./zalo/order.js";
 import createPaymentRoutes from "./zalo/payment/paymentRoutes.js";
+import purchaseRoutes from "./zalo/purchase.js";
 
 const app = express();
 const zaloApi = new ZaloApi();
@@ -34,6 +35,7 @@ app.use(express.json());
 
 app.use("/zalo/payment", createPaymentRoutes(wooService));
 
+app.use("/sendPurchaseOrder", purchaseRoutes);
 app.post("/zalo/token", async (req, res) => {
   try {
     const { code, code_verifier } = req.body;
