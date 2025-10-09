@@ -8,6 +8,7 @@ import ZaloApi from "./zalo/zaloApi.js";
 import WooService from "./zalo/order.js";
 import createPaymentRoutes from "./zalo/payment/paymentRoutes.js";
 import purchaseRoutes from "./zalo/purchase.js";
+import productRouter from "./BE_ruoumung/routes/products.js"
 
 const app = express();
 const zaloApi = new ZaloApi();
@@ -32,7 +33,10 @@ app.use(
 );
 
 app.use(express.json());
+// ruou mừng
+app.use("/ruoumung/api/products", productRouter);
 
+// Bách hóa lượm lộc
 app.use("/zalo/payment", createPaymentRoutes(wooService));
 
 app.use("/sendPurchaseOrder", purchaseRoutes);
