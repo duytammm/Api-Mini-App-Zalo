@@ -6,8 +6,8 @@ import { fileURLToPath } from "url";
 
 import ZaloApi from "./zalo/zaloApi.js";
 import WooService from "./zalo/order.js";
-import createPaymentRoutes from "./zalo/payment/paymentRoutes.js";
 import purchaseRoutes from "./zalo/purchase.js";
+import checkoutCODRouter from "./zalo/payment.js";
 import productRouter from "./BE_ruoumung/routes/products.js"
 
 const app = express();
@@ -37,7 +37,7 @@ app.use(express.json());
 app.use("/ruoumung/api/products", productRouter);
 
 // Bách hóa lượm lộc
-app.use("/zalo/payment", createPaymentRoutes(wooService));
+app.use("/zalo/checkout",checkoutCODRouter);
 
 app.use("/sendPurchaseOrder", purchaseRoutes);
 app.post("/zalo/token", async (req, res) => {

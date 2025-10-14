@@ -7,6 +7,7 @@ class WooService {
     this.consumerSecret = consumerSecret;
   }
 
+  // Tạo đơn hàng WooCommerce
   async createOrder(orderData) {
     try {
       const res = await fetch(`${this.baseUrl}/orders`, {
@@ -15,9 +16,7 @@ class WooService {
           "Content-Type": "application/json",
           Authorization:
             "Basic " +
-            Buffer.from(`${this.consumerKey}:${this.consumerSecret}`).toString(
-              "base64"
-            ),
+            Buffer.from(`${this.consumerKey}:${this.consumerSecret}`).toString("base64"),
         },
         body: JSON.stringify(orderData),
       });
@@ -30,11 +29,30 @@ class WooService {
 
       return data;
     } catch (error) {
-      console.error(
-        "WooService.createOrder error:",
-        error.response?.data || error.message
-      );
+      console.error("WooService.createOrder error:", error.message);
       throw error;
+    }
+  }
+
+  // Cập nhật trạng thái đơn hàng WooCommerce
+  async updateOrderStatus(orderId, status) {
+    try {
+      const res = await fetch(`${this.baseUrl}/orders/${orderId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization:
+            "Basic " +
+            Buffer.from(`${this.consumerKey}:${this.consumerSecret}`).toString("base64"),
+        },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Update WC order failed");
+      return data;
+    } catch (err) {
+      console.error("WooService.updateOrderStatus error:", err.message);
+      throw err;
     }
   }
 }
