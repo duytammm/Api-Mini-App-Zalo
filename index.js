@@ -6,7 +6,6 @@ import { fileURLToPath } from "url";
 
 import ZaloApi from "./zalo/zaloApi.js";
 import WooService from "./zalo/order.js";
-import purchaseRoutes from "./zalo/purchase.js";
 import checkoutCODRouter from "./zalo/payment.js";
 import productRouter from "./BE_ruoumung/routes/products.js"
 
@@ -39,7 +38,6 @@ app.use("/ruoumung/api/products", productRouter);
 // Bách hóa lượm lộc
 app.use("/zalo/checkout",checkoutCODRouter);
 
-app.use("/sendPurchaseOrder", purchaseRoutes);
 app.post("/zalo/token", async (req, res) => {
   try {
     const { code, code_verifier } = req.body;
