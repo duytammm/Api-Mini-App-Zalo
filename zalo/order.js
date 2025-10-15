@@ -1,3 +1,4 @@
+// order.js (WooService)
 import fetch from "node-fetch";
 
 class WooService {
@@ -7,7 +8,6 @@ class WooService {
     this.consumerSecret = consumerSecret;
   }
 
-  // Tạo đơn hàng WooCommerce
   async createOrder(orderData) {
     try {
       const res = await fetch(`${this.baseUrl}/orders`, {
@@ -22,36 +22,10 @@ class WooService {
       });
 
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Tạo đơn hàng thất bại");
-      }
-
-      return data;
-    } catch (error) {
-      console.error("WooService.createOrder error:", error.message);
-      throw error;
-    }
-  }
-
-  // Cập nhật trạng thái đơn hàng WooCommerce
-  async updateOrderStatus(orderId, status) {
-    try {
-      const res = await fetch(`${this.baseUrl}/orders/${orderId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization:
-            "Basic " +
-            Buffer.from(`${this.consumerKey}:${this.consumerSecret}`).toString("base64"),
-        },
-        body: JSON.stringify({ status }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Update WC order failed");
+      if (!res.ok || data.code) throw new Error(data.message || "WooCommerce error");
       return data;
     } catch (err) {
-      console.error("WooService.updateOrderStatus error:", err.message);
+      console.error("WooService.createOrder error:", err.message);
       throw err;
     }
   }

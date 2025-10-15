@@ -1,3 +1,4 @@
+// checkout.js (router)
 import express from "express";
 import WooService from "./order.js";
 
@@ -10,17 +11,15 @@ const wooService = new WooService({
 
 router.post("/", async (req, res) => {
   try {
-    const { orderInfo, cartItems } = req.body;
+    const { orderInfo, cartItems, paymentType } = req.body;
 
     if (!orderInfo || !cartItems?.length) {
       return res.status(400).json({ success: false, message: "Thiếu dữ liệu" });
     }
-
-    // 1️⃣ Tạo đơn COD trên WooCommerce
     const wcOrder = await wooService.createOrder({
-      payment_method: "cod",
-      payment_method_title: "Thanh toán khi nhận hàng",
-      set_paid: false, // COD nên set_paid=false
+      payment_method: paymentType === "COD" ? "cod" : "zalopay",
+      payment_method_title: paymentType,
+      set_paid: false,
       billing: {
         first_name: orderInfo.name,
         address_1: orderInfo.address,
@@ -47,18 +46,18 @@ router.post("/", async (req, res) => {
       })),
     });
 
-    // 2️⃣ Trả dữ liệu cho FE
     res.json({
       success: true,
       wcOrderId: wcOrder.id,
       total: cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
-      paymentMethod: "COD",
-      zpTransToken: "dummy_token_cod", // COD dùng token giả cho Checkout SDK
+      paymentMethod: paymentType,
+      zpTransToken: paymentType === "ZaloPay" ? "REAL_ZP_TOKEN" : "dummy_token_cod",
     });
   } catch (err) {
-    console.error("create COD order error:", err.message);
+    console.error("❌ Backend error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 export default router;
